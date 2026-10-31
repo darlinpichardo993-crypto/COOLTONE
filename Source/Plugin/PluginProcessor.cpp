@@ -10,6 +10,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout CoolToneAudioProcessor::make
  p.push_back(std::make_unique<AudioParameterChoice>("key","Key",StringArray{"C","C#","D","D#","E","F","F#","G","G#","A","A#","B"},0));
  p.push_back(std::make_unique<AudioParameterChoice>("scale","Scale",StringArray{"Major","Natural Minor","Harmonic Minor","Melodic Minor","Major Pentatonic","Minor Pentatonic","Blues","Jazz","Dorian","Phrygian","Lydian","Mixolydian","Chromatic","Custom"},0));
  p.push_back(std::make_unique<AudioParameterBool>("magic","Magic Vibrato",false));
+ p.push_back(std::make_unique<AudioParameterBool>("vibrato","Vibrato",false));
  p.push_back(std::make_unique<AudioParameterFloat>("vibAmount","Vibrato Amount",NormalisableRange<float>(0,1),.45f));
  p.push_back(std::make_unique<AudioParameterFloat>("vibRate","Vibrato Rate",NormalisableRange<float>(2,9),5.5f));
  p.push_back(std::make_unique<AudioParameterFloat>("vibDepth","Vibrato Depth",NormalisableRange<float>(0,65),22));
@@ -33,11 +34,11 @@ void CoolToneAudioProcessor::analyse()noexcept{
  int k=tracePos.fetch_add(1)%256;trace[static_cast<size_t>(k)].store(static_cast<float>(midi));
 }
 void CoolToneAudioProcessor::processBlock(juce::AudioBuffer<float>&b,juce::MidiBuffer&){
- juce::ScopedNoDenormals guard;int nc=b.getNumChannels(),ns=b.getNumSamples();bool bypass=get(state,"bypass")>.5f,magic=get(state,"magic")>.5f;
+ juce::ScopedNoDenormals guard;int nc=b.getNumChannels(),ns=b.getNumSamples();bool bypass=get(state,"bypass")>.5f,magic=get(state,"magic")>.5f,manualVibrato=get(state,"vibrato")>.5f;
  float rate=get(state,"vibRate",5.5f),depth=get(state,"vibDepth",22)*get(state,"vibAmount"),gain=juce::Decibels::decibelsToGain(get(state,"output"));
  double range=juce::jmax(128.0,sampleRate*.035),smooth=1-std::exp(-1.0/(juce::jmax(.005,get(state,"retune",35)*.001)*sampleRate));
  for(int n=0;n<ns;++n){float mono=0;for(int c=0;c<nc;++c)mono+=b.getSample(c,n);mono/=static_cast<float>(juce::jmax(1,nc));ring[static_cast<size_t>(write)]=mono;write=(write+1)%2048;if(++analysisCount>=512){analysisCount=0;analyse();}
-  double vib=(magic&&stable>sampleRate*.22)?depth*std::sin(vibPhase):0;vibPhase+=2*PI*rate/sampleRate;if(vibPhase>2*PI)vibPhase-=2*PI;
+  double vib=((manualVibrato||(magic&&stable>sampleRate*.22)))?depth*std::sin(vibPhase):0;vibPhase+=2*PI*rate/sampleRate;if(vibPhase>2*PI)vibPhase-=2*PI;
   float wanted=std::pow(2.0f,(targetShift+static_cast<float>(vib/100))/12.0f);ratio+=static_cast<float>(smooth)*(wanted-ratio);
   phase+=(1.0-ratio)/range;while(phase<0)phase+=1;while(phase>=1)phase-=1;
   for(int c=0;c<nc;++c){float in=b.getSample(c,n);auto&d=delay[static_cast<size_t>(c)];d[static_cast<size_t>(delayWrite)]=in;
