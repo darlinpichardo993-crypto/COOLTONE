@@ -43,8 +43,8 @@ private:
 
     juce::ComboBox key, scale, preset;
     juce::TextButton magic{"MAGIC VIBRATO"}, vibratoButton{"VIBRATO"}, bypass{"BYPASS"};
-    juce::TextButton openButton{"OPEN WAV"}, analyseButton{"ANALYZE NOTES"},
-                     exportButton{"EXPORT TUNED"}, dragButton{"DRAG TO FL"};
+    juce::TextButton openButton{"OPEN WAV"}, analyseButton{"ANALYZE NOTES"}, exportButton{"EXPORT TUNED"};
+    ExternalFileDragButton dragButton{"HOLD & DRAG TO FL"};
     juce::Slider strength, retune, amount, rate, depth, output;
     juce::Label l1,l2,l3,l4,l5,l6;
     juce::LookAndFeel_V4 lf;
