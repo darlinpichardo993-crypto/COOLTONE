@@ -28,7 +28,20 @@ void CoolToneAudioProcessor::analyse()noexcept{
  int lo=juce::jmax(2,static_cast<int>(sampleRate/1000)),hi=juce::jmin(N/2,static_cast<int>(sampleRate/70)),bestLag=0;double best=-1;
  for(int lag=lo;lag<=hi;++lag){double c=0,a=0,b=0;for(int i=0;i<N-lag;i+=2){double u=x[static_cast<size_t>(i)],v=x[static_cast<size_t>(i+lag)];c+=u*v;a+=u*u;b+=v*v;}double q=(a>1e-12&&b>1e-12)?c/std::sqrt(a*b):0;if(q>best){best=q;bestLag=lag;}}
  if(bestLag==0||best<.60){currentPitch.store(-1);stable=0;targetShift=0;return;}
- double midi=69+12*std::log2((sampleRate/bestLag)/440.0);float old=currentPitch.load();stable=(old>0&&std::abs(midi-old)<.45f)?stable+512:0;currentPitch.store(static_cast<float>(midi));
+ auto corrAt=[&](int lag)
+ {
+  double c=0,a=0,b=0;
+  for(int i=0;i<N-lag;i+=2){double u=x[static_cast<size_t>(i)],v=x[static_cast<size_t>(i+lag)];c+=u*v;a+=u*u;b+=v*v;}
+  return (a>1e-12&&b>1e-12)?c/std::sqrt(a*b):0.0;
+ };
+ double lagF=static_cast<double>(bestLag);
+ if(bestLag>lo&&bestLag<hi)
+ {
+  const double q0=corrAt(bestLag-1),q1=corrAt(bestLag),q2=corrAt(bestLag+1);
+  const double den=q0-2.0*q1+q2;
+  if(std::abs(den)>1.0e-9) lagF+=juce::jlimit(-0.5,0.5,0.5*(q0-q2)/den);
+ }
+ double midi=69+12*std::log2((sampleRate/lagF)/440.0);float old=currentPitch.load();stable=(old>0&&std::abs(midi-old)<.45f)?stable+512:0;currentPitch.store(static_cast<float>(midi));
  scales.setKey(static_cast<int>(get(state,"key")));scales.setScale(static_cast<cooltone::ScaleType>(juce::jlimit(0,13,static_cast<int>(get(state,"scale")))));
  targetShift=static_cast<float>((scales.nearestAllowed(midi)-midi)*get(state,"strength",.85f));
  int k=tracePos.fetch_add(1)%256;trace[static_cast<size_t>(k)].store(static_cast<float>(midi));
