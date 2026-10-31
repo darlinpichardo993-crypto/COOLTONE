@@ -13,6 +13,64 @@ const juce::Colour bg(0xff080a0f), panel(0xff121722), panel2(0xff1a2130),
 constexpr double pi = 3.14159265358979323846;
 }
 
+namespace
+{
+void pitchShiftNote (juce::AudioBuffer<float>& segment, double sampleRate,
+                     double semitones, double vibratoCents, double vibratoRate)
+{
+    if (segment.getNumSamples() < 128) return;
+    constexpr int ringSize = 16384;
+    constexpr int minDelay = 512;
+    const int range = juce::jlimit(256, 4096, static_cast<int>(sampleRate * 0.035));
+    const int channels = segment.getNumChannels();
+    const int length = segment.getNumSamples();
+    const int total = length + minDelay + range + 8;
+    std::vector<std::vector<float>> delay(static_cast<size_t>(channels),
+                                          std::vector<float>(ringSize, 0.0f));
+    std::vector<std::vector<float>> wet(static_cast<size_t>(channels),
+                                        std::vector<float>(static_cast<size_t>(total), 0.0f));
+    double phase = 0.0, vibratoPhase = 0.0;
+    int write = 0;
+    for (int n = 0; n < total; ++n)
+    {
+        const double vib = vibratoCents * std::sin(vibratoPhase);
+        const double factor = std::pow(2.0, (semitones + vib / 100.0) / 12.0);
+        vibratoPhase += 2.0 * pi * vibratoRate / sampleRate;
+        if (vibratoPhase >= 2.0 * pi) vibratoPhase -= 2.0 * pi;
+        phase += (1.0 - 1.0 / factor) / static_cast<double>(range);
+        while (phase < 0.0) phase += 1.0;
+        while (phase >= 1.0) phase -= 1.0;
+        double phaseB = phase + 0.5;
+        if (phaseB >= 1.0) phaseB -= 1.0;
+        const double delayA = minDelay + phase * range;
+        const double delayB = minDelay + phaseB * range;
+        const float wa = static_cast<float>(0.5 - 0.5 * std::cos(2.0 * pi * phase));
+        for (int ch = 0; ch < channels; ++ch)
+        {
+            auto& line = delay[static_cast<size_t>(ch)];
+            line[static_cast<size_t>(write)] = n < length ? segment.getSample(ch,n) : 0.0f;
+            auto read = [&](double d)
+            {
+                double pos = static_cast<double>(write) - d;
+                while (pos < 0.0) pos += ringSize;
+                while (pos >= ringSize) pos -= ringSize;
+                const int i = static_cast<int>(pos), j = (i + 1) % ringSize;
+                const float frac = static_cast<float>(pos - std::floor(pos));
+                return line[static_cast<size_t>(i)] +
+                       frac * (line[static_cast<size_t>(j)] - line[static_cast<size_t>(i)]);
+            };
+            wet[static_cast<size_t>(ch)][static_cast<size_t>(n)] =
+                read(delayA) * wa + read(delayB) * (1.0f - wa);
+        }
+        write = (write + 1) % ringSize;
+    }
+    for (int ch = 0; ch < channels; ++ch)
+        for (int i = 0; i < length; ++i)
+            segment.setSample(ch,i,wet[static_cast<size_t>(ch)][static_cast<size_t>(i+minDelay)]);
+}
+}
+
+
 CoolToneAudioProcessorEditor::CoolToneAudioProcessorEditor(CoolToneAudioProcessor& p)
     : AudioProcessorEditor(&p), proc(p)
 {
@@ -170,12 +228,9 @@ bool CoolToneAudioProcessorEditor::exportTunedAudio()
         if (len<512) continue;
         juce::AudioBuffer<float> segment(rendered.getNumChannels(),len);
         for(int c=0;c<rendered.getNumChannels();++c) segment.copyFrom(c,0,rendered,c,start,len);
-        juce::dsp::PitchShifter<float> shifter;
-        juce::dsp::ProcessSpec spec{fileSampleRate,static_cast<juce::uint32>(len),static_cast<juce::uint32>(segment.getNumChannels())};
-        shifter.prepare(spec); shifter.setPitchFactor(static_cast<float>(std::pow(2.0,semitones/12.0)));
-        juce::dsp::AudioBlock<float> block(segment);
-        juce::dsp::ProcessContextReplacing<float> context(block);
-        shifter.process(context);
+        const bool useVibrato = vibratoButton.getToggleState() || magic.getToggleState();
+        const double vibCents = useVibrato ? static_cast<double>(depth.getValue() * amount.getValue()) : 0.0;
+        pitchShiftNote(segment,fileSampleRate,semitones,vibCents,rate.getValue());
         const int fade=juce::jmin(len/3,juce::jmax(32,sr/100));
         for(int c=0;c<rendered.getNumChannels();++c)
             for(int i=0;i<len;++i)
