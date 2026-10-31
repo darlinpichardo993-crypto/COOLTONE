@@ -315,10 +315,10 @@ void CoolToneAudioProcessorEditor::drawNoteEditor(juce::Graphics& g,juce::Rectan
         juce::Rectangle<float> b(x,y-7.0f,w,14.0f);
         g.setColour(static_cast<int>(i)==selectedNote?orange:cyan);g.fillRoundedRectangle(b,3.0f);
         g.setColour(juce::Colour(0xff10151e));g.setFont(9.0f);
-        if(w>30)g.drawText(juce::MidiMessage::getMidiNoteName(static_cast<int>(std::lround(editedMidi[i])),true,true,3),b,juce::Justification::centred);
+        if(w>30)g.drawText(juce::MidiMessage::getMidiNoteName(static_cast<int>(std::lround(editedMidi[i])),true,true,3),b.toNearestInt(),juce::Justification::centred);
     }
     g.setColour(muted);g.setFont(10.0f);
-    g.drawText(loadedFile.getFileName()+"  |  "+juce::String(notes.size())+" notes  |  "+juce::String(duration,1)+" sec",r.getX(),r.getBottom()+8,r.getWidth(),16,juce::Justification::left);
+    g.drawText(loadedFile.getFileName()+"  |  "+juce::String(static_cast<int>(notes.size()))+" notes  |  "+juce::String(duration,1)+" sec",r.getX(),r.getBottom()+8,r.getWidth(),16,juce::Justification::left);
 }
 
 void CoolToneAudioProcessorEditor::timerCallback(){repaint();}
