@@ -179,6 +179,23 @@ bool CoolToneAudioProcessorEditor::loadAudioFile(const juce::File& file)
     if (!reader->read(&loaded,0,length,0,true,true)) return false;
     sourceAudio = std::move(loaded);
     fileSampleRate = reader->sampleRate;
+    waveformPeaks.clear();
+    const int peakColumns=juce::jmin(4096,sourceAudio.getNumSamples());
+    waveformPeaks.reserve(static_cast<size_t>(peakColumns));
+    for(int x=0;x<peakColumns;++x)
+    {
+        const int a=static_cast<int>((static_cast<juce::int64>(x)*sourceAudio.getNumSamples())/peakColumns);
+        const int b=juce::jmax(a+1,static_cast<int>((static_cast<juce::int64>(x+1)*sourceAudio.getNumSamples())/peakColumns));
+        float lo=1.0f,hi=-1.0f;
+        for(int i=a;i<juce::jmin(b,sourceAudio.getNumSamples());++i)
+        {
+            float v=0.0f;
+            for(int ch=0;ch<sourceAudio.getNumChannels();++ch) v+=sourceAudio.getSample(ch,i);
+            v/=static_cast<float>(sourceAudio.getNumChannels());
+            lo=juce::jmin(lo,v);hi=juce::jmax(hi,v);
+        }
+        waveformPeaks.emplace_back(lo,hi);
+    }
     loadedFile = file; fileLoaded = true; analysed = false; notes.clear(); editedMidi.clear();
     renderedFile = {};
     dragButton.setEnabled(false);
@@ -305,25 +322,16 @@ void CoolToneAudioProcessorEditor::drawNoteEditor(juce::Graphics& g,juce::Rectan
         g.setColour(black?juce::Colour(0xff171d29):juce::Colour(0xff202938));g.fillRect(r.getX(),y-1,r.getWidth(),1.0f);
         if(midi%12==0){g.setColour(muted);g.setFont(9.0f);g.drawText(juce::MidiMessage::getMidiNoteName(midi,true,true,3),r.getX()+3,y-12,34,12,juce::Justification::left);}
     }
-    if(sourceAudio.getNumSamples()>0)
+    if(!waveformPeaks.empty())
     {
         g.setColour(juce::Colour(0xff52657f));
-        const int columns=juce::jmax(1,static_cast<int>(r.getWidth()));
-        const int samples=sourceAudio.getNumSamples();
+        const int columns=static_cast<int>(waveformPeaks.size());
         for(int x=0;x<columns;++x)
         {
-            const int a=juce::jlimit(0,samples-1,static_cast<int>((static_cast<juce::int64>(x)*samples)/columns));
-            const int b=juce::jlimit(a+1,samples,static_cast<int>((static_cast<juce::int64>(x+1)*samples)/columns));
-            float lo=1.0f,hi=-1.0f;
-            for(int i=a;i<b;++i)
-            {
-                float v=0.0f;
-                for(int ch=0;ch<sourceAudio.getNumChannels();++ch) v+=sourceAudio.getSample(ch,i);
-                v/=static_cast<float>(sourceAudio.getNumChannels());
-                lo=juce::jmin(lo,v);hi=juce::jmax(hi,v);
-            }
+            const auto peak=waveformPeaks[static_cast<size_t>(x)];
             const float mid=r.getCentreY(),scale=r.getHeight()*0.34f;
-            g.drawVerticalLine(static_cast<int>(r.getX())+x,mid-hi*scale,mid-lo*scale);
+            const float px=r.getX()+static_cast<float>(x)*r.getWidth()/static_cast<float>(columns);
+            g.drawVerticalLine(static_cast<int>(px),mid-peak.second*scale,mid-peak.first*scale);
         }
     }
     if(notes.empty()){g.setColour(orange);g.drawText("AUDIO LOADED — CLICK ANALYZE NOTES",r.toNearestInt(),juce::Justification::centred);return;}
