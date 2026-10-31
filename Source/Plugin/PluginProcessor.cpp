@@ -11,9 +11,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout CoolToneAudioProcessor::make
  p.push_back(std::make_unique<AudioParameterChoice>("scale","Scale",StringArray{"Major","Natural Minor","Harmonic Minor","Melodic Minor","Major Pentatonic","Minor Pentatonic","Blues","Jazz","Dorian","Phrygian","Lydian","Mixolydian","Chromatic","Custom"},0));
  p.push_back(std::make_unique<AudioParameterBool>("magic","Magic Vibrato",false));
  p.push_back(std::make_unique<AudioParameterBool>("vibrato","Vibrato",false));
- p.push_back(std::make_unique<AudioParameterFloat>("vibAmount","Vibrato Amount",NormalisableRange<float>(0,1),.45f));
+ p.push_back(std::make_unique<AudioParameterFloat>("vibAmount","Vibrato Amount",NormalisableRange<float>(0,1),.70f));
  p.push_back(std::make_unique<AudioParameterFloat>("vibRate","Vibrato Rate",NormalisableRange<float>(2,9),5.5f));
- p.push_back(std::make_unique<AudioParameterFloat>("vibDepth","Vibrato Depth",NormalisableRange<float>(0,65),22));
+ p.push_back(std::make_unique<AudioParameterFloat>("vibDepth","Vibrato Depth",NormalisableRange<float>(0,100),35));
  p.push_back(std::make_unique<AudioParameterFloat>("output","Output",NormalisableRange<float>(-18,6),0));
  p.push_back(std::make_unique<AudioParameterBool>("bypass","Bypass",false));return{p.begin(),p.end()};
 }
