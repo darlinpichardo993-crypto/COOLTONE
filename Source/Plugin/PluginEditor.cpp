@@ -208,7 +208,11 @@ void CoolToneAudioProcessorEditor::analyseAudio()
     sp.minNoteSec=0.045; sp.smoothRadius=2; sp.maxGapFrames=2;
     notes = cooltone::segmentNotes(frames,yp.hopSeconds,sp);
     editedMidi.clear(); editedMidi.reserve(notes.size());
-    cooltone::ScaleEngine scaleEngine;\n    scaleEngine.setKey(key.getSelectedId()-1);\n    scaleEngine.setScale(static_cast<cooltone::ScaleType>(juce::jlimit(0,13,scale.getSelectedId()-1)));\n    const double correction=static_cast<double>(strength.getValue());\n    for (const auto& n : notes) { const double snapped=scaleEngine.nearestAllowed(n.midiPitch); editedMidi.push_back(n.midiPitch+(snapped-n.midiPitch)*correction); }
+    cooltone::ScaleEngine scaleEngine;
+    scaleEngine.setKey(key.getSelectedId()-1);
+    scaleEngine.setScale(static_cast<cooltone::ScaleType>(juce::jlimit(0,13,scale.getSelectedId()-1)));
+    const double correction=static_cast<double>(strength.getValue());
+    for (const auto& n : notes) { const double snapped=scaleEngine.nearestAllowed(n.midiPitch); editedMidi.push_back(n.midiPitch+(snapped-n.midiPitch)*correction); }
     analysed = true; exportButton.setEnabled(!notes.empty()); repaint();
 }
 
