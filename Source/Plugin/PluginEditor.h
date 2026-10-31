@@ -4,8 +4,27 @@
 #include "PitchDetection.h"
 #include "NoteSegmenter.h"
 #include <vector>
+#include <functional>
 
-class ExternalFileDragButton final : public juce::TextButton\n{\npublic:\n    explicit ExternalFileDragButton (const juce::String& text) : juce::TextButton(text) {}\n    std::function<juce::String()> getFileToDrag;\n    void mouseDown (const juce::MouseEvent& e) override { dragStarted=false; juce::TextButton::mouseDown(e); }\n    void mouseDrag (const juce::MouseEvent& e) override\n    {\n        juce::TextButton::mouseDrag(e);\n        if (dragStarted || !getFileToDrag) return;\n        const auto path=getFileToDrag();\n        if (path.isNotEmpty() && juce::File(path).existsAsFile())\n            dragStarted=juce::DragAndDropContainer::performExternalDragDropOfFiles({path},false,this);\n    }\nprivate:\n    bool dragStarted=false;\n};\n\nclass CoolToneAudioProcessorEditor final : public juce::AudioProcessorEditor,
+class ExternalFileDragButton final : public juce::TextButton
+{
+public:
+    explicit ExternalFileDragButton (const juce::String& text) : juce::TextButton(text) {}
+    std::function<juce::String()> getFileToDrag;
+    void mouseDown (const juce::MouseEvent& e) override { dragStarted=false; juce::TextButton::mouseDown(e); }
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        juce::TextButton::mouseDrag(e);
+        if (dragStarted || !getFileToDrag) return;
+        const auto path=getFileToDrag();
+        if (path.isNotEmpty() && juce::File(path).existsAsFile())
+            dragStarted=juce::DragAndDropContainer::performExternalDragDropOfFiles({path},false,this);
+    }
+private:
+    bool dragStarted=false;
+};
+
+class CoolToneAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                            private juce::Timer,
                                            private juce::FileDragAndDropTarget
 {
