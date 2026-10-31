@@ -5,6 +5,7 @@
 #include "NoteSegmenter.h"
 #include <vector>
 #include <functional>
+#include <utility>
 
 class ExternalFileDragButton final : public juce::TextButton
 {
@@ -52,6 +53,7 @@ private:
     juce::AudioBuffer<float> sourceAudio;
     std::vector<cooltone::Note> notes;
     std::vector<double> editedMidi;
+    std::vector<std::pair<float,float>> waveformPeaks;
     juce::File loadedFile, renderedFile;
     double fileSampleRate = 44100.0;
     juce::Rectangle<float> noteArea;
