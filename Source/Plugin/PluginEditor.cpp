@@ -44,7 +44,7 @@ void pitchShiftNote (juce::AudioBuffer<float>& segment, double sampleRate,
         if (phaseB >= 1.0) phaseB -= 1.0;
         const double delayA = minDelay + phase * range;
         const double delayB = minDelay + phaseB * range;
-        const float wa = static_cast<float>(0.5 - 0.5 * std::cos(2.0 * pi * phase));
+        const float wa = static_cast<float>(0.5 + 0.5 * std::cos(2.0 * pi * phase));
         for (int ch = 0; ch < channels; ++ch)
         {
             auto& line = delay[static_cast<size_t>(ch)];
