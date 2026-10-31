@@ -34,6 +34,7 @@ private:
     std::vector<cooltone::Note> notes;
     std::vector<double> editedMidi;
     juce::File loadedFile, renderedFile;
+    double fileSampleRate = 44100.0;
     juce::Rectangle<float> noteArea;
     int selectedNote = -1;
     float dragStartY = 0.0f;
