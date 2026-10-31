@@ -116,10 +116,9 @@ CoolToneAudioProcessorEditor::CoolToneAudioProcessorEditor(CoolToneAudioProcesso
     analyseButton.onClick = [this] { analyseAudio(); };
     exportButton.onClick = [this] { if (exportTunedAudio()) dragButton.setEnabled(true); };
     dragButton.setEnabled(false);
-    dragButton.onClick = [this]
+    dragButton.getFileToDrag = [this]
     {
-        if (renderedFile.existsAsFile())
-            juce::DragAndDropContainer::performExternalDragDropOfFiles({renderedFile.getFullPathName()}, false);
+        return renderedFile.existsAsFile() ? renderedFile.getFullPathName() : juce::String{};
     };
 
     ka=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(proc.state,"key",key);
