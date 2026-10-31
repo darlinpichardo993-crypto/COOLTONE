@@ -36,11 +36,19 @@ jobs:
       - name: Create installer
         shell: pwsh
         run: |
-          $iscc="$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
-          if(-not(Test-Path $iscc)){$iscc="$env:ProgramFiles\Inno Setup 6\ISCC.exe"}
-          if(-not(Test-Path $iscc)){throw "ISCC.exe missing"}
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+            "$env:ChocolateyInstall\lib\innosetup\tools\ISCC.exe"
+          )
+          $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          if (-not $iscc) {
+            $cmd = Get-Command ISCC.exe -ErrorAction SilentlyContinue
+            if ($cmd) { $iscc = $cmd.Source }
+          }
+          if (-not $iscc) { throw "ISCC.exe not found in the known Inno Setup locations" }
           & $iscc installer/COOLTONE.iss
-          if($LASTEXITCODE -ne 0){throw "Installer compilation failed"}
+          if ($LASTEXITCODE -ne 0) { throw "Installer compilation failed" }
       - name: Create ZIP
         shell: pwsh
         run: |
