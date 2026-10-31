@@ -1,6 +1,8 @@
 #include "PluginEditor.h"
 #include "WavIO.h"
 #include <cmath>
+#include <algorithm>
+#include <array>
 
 namespace
 {
@@ -117,6 +119,7 @@ bool CoolToneAudioProcessorEditor::loadAudioFile(const juce::File& file)
     juce::AudioBuffer<float> loaded(channels,length);
     if (!reader->read(&loaded,0,length,0,true,true)) return false;
     sourceAudio = std::move(loaded);
+    fileSampleRate = reader->sampleRate;
     loadedFile = file; fileLoaded = true; analysed = false; notes.clear(); editedMidi.clear();
     renderedFile = {};
     dragButton.setEnabled(false);
@@ -238,7 +241,7 @@ void CoolToneAudioProcessorEditor::drawNoteEditor(juce::Graphics& g,juce::Rectan
     for(int midi=48;midi<=84;++midi)
     {
         const float y=r.getBottom()-static_cast<float>(midi-48)/36.0f*r.getHeight();
-        const bool black=std::array<int,5>{1,3,6,8,10}.end()!=std::find(std::array<int,5>{1,3,6,8,10}.begin(),std::array<int,5>{1,3,6,8,10}.end(),midi%12);
+        const int pc=midi%12; const bool black=(pc==1||pc==3||pc==6||pc==8||pc==10);
         g.setColour(black?juce::Colour(0xff171d29):juce::Colour(0xff202938));g.fillRect(r.getX(),y-1,r.getWidth(),1.0f);
         if(midi%12==0){g.setColour(muted);g.setFont(9.0f);g.drawText(juce::MidiMessage::getMidiNoteName(midi,true,true,3),r.getX()+3,y-12,34,12,juce::Justification::left);}
     }
