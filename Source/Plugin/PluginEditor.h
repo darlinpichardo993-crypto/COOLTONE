@@ -42,14 +42,14 @@ private:
     bool fileLoaded = false, analysed = false, draggingNote = false;
 
     juce::ComboBox key, scale, preset;
-    juce::TextButton magic{"MAGIC VIBRATO"}, bypass{"BYPASS"};
+    juce::TextButton magic{"MAGIC VIBRATO"}, vibratoButton{"VIBRATO"}, bypass{"BYPASS"};
     juce::TextButton openButton{"OPEN WAV"}, analyseButton{"ANALYZE NOTES"},
                      exportButton{"EXPORT TUNED"}, dragButton{"DRAG TO FL"};
     juce::Slider strength, retune, amount, rate, depth, output;
     juce::Label l1,l2,l3,l4,l5,l6;
     juce::LookAndFeel_V4 lf;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> ka,sa;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ma,ba;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> ma,va,ba;
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> a1,a2,a3,a4,a5,a6;
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (CoolToneAudioProcessorEditor)
 };
