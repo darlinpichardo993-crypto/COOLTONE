@@ -1,33 +1,36 @@
-cmake_minimum_required(VERSION 3.20)
-project(COOLTONE VERSION 0.1.0 LANGUAGES CXX)
-
+cmake_minimum_required(VERSION 3.22)
+project(COOLTONE VERSION 0.2.0 LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
-option(COOLTONE_BUILD_TESTS  "Build the Core unit tests" ON)
-option(COOLTONE_BUILD_PLUGIN "Build the JUCE VST3 / Standalone (NOT implemented yet - Phase 4)" OFF)
-
-# ---- Core: pure C++17, no JUCE, fully unit-tested ----
-add_library(cooltone_core STATIC
-    Source/Core/ScaleEngine.cpp
-    Source/Core/PitchDetection.cpp
-    Source/Core/NoteSegmenter.cpp
-    Source/Core/WavIO.cpp)
+option(COOLTONE_BUILD_TESTS "Build core tests" ON)
+option(COOLTONE_BUILD_PLUGIN "Build JUCE plugin" ON)
+add_library(cooltone_core STATIC Source/Core/ScaleEngine.cpp Source/Core/PitchDetection.cpp Source/Core/NoteSegmenter.cpp Source/Core/WavIO.cpp)
 target_include_directories(cooltone_core PUBLIC Source/Core)
+set_target_properties(cooltone_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
-    target_compile_options(cooltone_core PRIVATE /W4 /permissive-)
+ target_compile_options(cooltone_core PRIVATE /W4 /permissive-)
 else()
-    target_compile_options(cooltone_core PRIVATE -Wall -Wextra -Wpedantic)
+ target_compile_options(cooltone_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
-
 if(COOLTONE_BUILD_TESTS)
-    enable_testing()
-    add_executable(cooltone_tests Tests/test_main.cpp)
-    target_link_libraries(cooltone_tests PRIVATE cooltone_core)
-    add_test(NAME cooltone_core_tests COMMAND cooltone_tests)
+ enable_testing()
+ add_executable(cooltone_tests Tests/test_main.cpp)
+ target_link_libraries(cooltone_tests PRIVATE cooltone_core)
+ add_test(NAME cooltone_core_tests COMMAND cooltone_tests)
 endif()
-
 if(COOLTONE_BUILD_PLUGIN)
-    message(FATAL_ERROR "The JUCE plugin target is not implemented yet (planned for Phase 4). See README.md.")
+ include(FetchContent)
+ set(JUCE_BUILD_EXTRAS OFF CACHE BOOL "" FORCE)
+ set(JUCE_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+ FetchContent_Declare(juce GIT_REPOSITORY https://github.com/juce-framework/JUCE.git GIT_TAG 8.0.8 GIT_SHALLOW TRUE)
+ FetchContent_MakeAvailable(juce)
+ juce_add_plugin(COOLTONE COMPANY_NAME "YMY Records" BUNDLE_ID "com.ymyrecords.cooltone"
+  PLUGIN_MANUFACTURER_CODE ORYM PLUGIN_CODE CToo FORMATS VST3 Standalone PRODUCT_NAME "COOLTONE"
+  IS_SYNTH FALSE NEEDS_MIDI_INPUT FALSE NEEDS_MIDI_OUTPUT FALSE IS_MIDI_EFFECT FALSE
+  EDITOR_WANTS_KEYBOARD_FOCUS TRUE COPY_PLUGIN_AFTER_BUILD FALSE)
+ juce_generate_juce_header(COOLTONE)
+ target_sources(COOLTONE PRIVATE Source/Plugin/PluginProcessor.cpp Source/Plugin/PluginEditor.cpp)
+ target_include_directories(COOLTONE PRIVATE Source/Plugin Source/Core)
+ target_compile_definitions(COOLTONE PUBLIC JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_VST3_CAN_REPLACE_VST2=0)
+ target_link_libraries(COOLTONE PRIVATE cooltone_core juce::juce_audio_utils juce::juce_dsp juce::juce_gui_extra juce::juce_recommended_config_flags juce::juce_recommended_warning_flags)
 endif()
