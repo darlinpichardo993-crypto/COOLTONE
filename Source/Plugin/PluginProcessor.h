@@ -29,7 +29,7 @@ private:
  std::array<float,2048> ring{}; std::array<std::atomic<float>,256> trace{};
  std::atomic<float> currentPitch{-1}; std::atomic<int> tracePos{0};
  std::vector<std::vector<float>> delay;
- double sampleRate=44100,phase=0,vibPhase=0; int write=0,analysisCount=0,stable=0;
+ double sampleRate=44100,phase=0,vibPhase=0; int write=0,delayWrite=0,analysisCount=0,stable=0;
  float ratio=1,targetShift=0; cooltone::ScaleEngine scales;
  JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CoolToneAudioProcessor)
 };
