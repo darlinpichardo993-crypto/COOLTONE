@@ -44,7 +44,7 @@ void pitchShiftNote (juce::AudioBuffer<float>& segment, double sampleRate,
         if (phaseB >= 1.0) phaseB -= 1.0;
         const double delayA = minDelay + phase * range;
         const double delayB = minDelay + phaseB * range;
-        const float wa = static_cast<float>(0.5 + 0.5 * std::cos(2.0 * pi * phase));
+        const float wa = static_cast<float>(0.5 - 0.5 * std::cos(2.0 * pi * phase));
         for (int ch = 0; ch < channels; ++ch)
         {
             auto& line = delay[static_cast<size_t>(ch)];
@@ -66,7 +66,7 @@ void pitchShiftNote (juce::AudioBuffer<float>& segment, double sampleRate,
     }
     for (int ch = 0; ch < channels; ++ch)
         for (int i = 0; i < length; ++i)
-            segment.setSample(ch,i,wet[static_cast<size_t>(ch)][static_cast<size_t>(i+minDelay)]);
+            segment.setSample(ch,i,wet[static_cast<size_t>(ch)][static_cast<size_t>(i+minDelay+range/2)]);
 }
 }
 
@@ -234,7 +234,7 @@ bool CoolToneAudioProcessorEditor::exportTunedAudio()
         const bool useVibrato = vibratoButton.getToggleState() || magic.getToggleState();
         const double vibCents = useVibrato ? static_cast<double>(depth.getValue() * amount.getValue()) : 0.0;
         pitchShiftNote(segment,fileSampleRate,semitones,vibCents,rate.getValue());
-        const int fade=juce::jmin(len/3,juce::jmax(32,sr/100));
+        const int fade=juce::jmin(len/3,juce::jmax(32,static_cast<int>(sr*retune.getValue()*.001)));
         for(int c=0;c<rendered.getNumChannels();++c)
             for(int i=0;i<len;++i)
             {
