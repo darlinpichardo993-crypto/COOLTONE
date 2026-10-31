@@ -51,7 +51,7 @@ void CoolToneAudioProcessor::processBlock(juce::AudioBuffer<float>&b,juce::MidiB
  float rate=get(state,"vibRate",5.5f),depth=get(state,"vibDepth",22)*get(state,"vibAmount"),gain=juce::Decibels::decibelsToGain(get(state,"output"));
  double range=juce::jmax(128.0,sampleRate*.035),smooth=1-std::exp(-1.0/(juce::jmax(.005,get(state,"retune",35)*.001)*sampleRate));
  for(int n=0;n<ns;++n){float mono=0;for(int c=0;c<nc;++c)mono+=b.getSample(c,n);mono/=static_cast<float>(juce::jmax(1,nc));ring[static_cast<size_t>(write)]=mono;write=(write+1)%2048;if(++analysisCount>=512){analysisCount=0;analyse();}
-  double vib=((manualVibrato||(magic&&stable>sampleRate*.22)))?depth*std::sin(vibPhase):0;vibPhase+=2*PI*rate/sampleRate;if(vibPhase>2*PI)vibPhase-=2*PI;
+  double vib=(((manualVibrato&&stable>sampleRate*.06)||(magic&&stable>sampleRate*.22)))?depth*std::sin(vibPhase):0;vibPhase+=2*PI*rate/sampleRate;if(vibPhase>2*PI)vibPhase-=2*PI;
   float wanted=std::pow(2.0f,(targetShift+static_cast<float>(vib/100))/12.0f);ratio+=static_cast<float>(smooth)*(wanted-ratio);
   phase+=(1.0-ratio)/range;while(phase<0)phase+=1;while(phase>=1)phase-=1;
   for(int c=0;c<nc;++c){float in=b.getSample(c,n);auto&d=delay[static_cast<size_t>(c)];d[static_cast<size_t>(delayWrite)]=in;
