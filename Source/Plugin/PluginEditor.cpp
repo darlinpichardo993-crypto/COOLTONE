@@ -37,7 +37,7 @@ void pitchShiftNote (juce::AudioBuffer<float>& segment, double sampleRate,
         const double factor = std::pow(2.0, (semitones + vib / 100.0) / 12.0);
         vibratoPhase += 2.0 * pi * vibratoRate / sampleRate;
         if (vibratoPhase >= 2.0 * pi) vibratoPhase -= 2.0 * pi;
-        phase += (1.0 - 1.0 / factor) / static_cast<double>(range);
+        phase += (1.0 - factor) / static_cast<double>(range);
         while (phase < 0.0) phase += 1.0;
         while (phase >= 1.0) phase -= 1.0;
         double phaseB = phase + 0.5;
