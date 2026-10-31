@@ -1,5 +1,6 @@
 #include "PluginEditor.h"
 #include "WavIO.h"
+#include "ScaleEngine.h"
 #include <cmath>
 #include <algorithm>
 #include <array>
@@ -50,8 +51,8 @@ CoolToneAudioProcessorEditor::CoolToneAudioProcessorEditor(CoolToneAudioProcesso
     add(rate,l4,"VIBRATO RATE"); add(depth,l5,"VIBRATO DEPTH"); add(output,l6,"OUTPUT");
 
     for (auto* c : {&key,&scale,&preset}) addAndMakeVisible(*c);
-    for (auto* b : {&magic,&bypass,&openButton,&analyseButton,&exportButton,&dragButton}) addAndMakeVisible(*b);
-    magic.setClickingTogglesState(true); magic.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff493c73));
+    for (auto* b : {&magic,&vibratoButton,&bypass,&openButton,&analyseButton,&exportButton,&dragButton}) addAndMakeVisible(*b);
+    magic.setClickingTogglesState(true); vibratoButton.setClickingTogglesState(true); vibratoButton.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff285b67)); magic.setColour(juce::TextButton::buttonOnColourId,juce::Colour(0xff493c73));
     bypass.setClickingTogglesState(true);
     openButton.onClick = [this] { openAudio(); };
     analyseButton.onClick = [this] { analyseAudio(); };
@@ -66,6 +67,7 @@ CoolToneAudioProcessorEditor::CoolToneAudioProcessorEditor(CoolToneAudioProcesso
     ka=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(proc.state,"key",key);
     sa=std::make_unique<juce::AudioProcessorValueTreeState::ComboBoxAttachment>(proc.state,"scale",scale);
     ma=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(proc.state,"magic",magic);
+    va=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(proc.state,"vibrato",vibratoButton);
     ba=std::make_unique<juce::AudioProcessorValueTreeState::ButtonAttachment>(proc.state,"bypass",bypass);
     a1=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(proc.state,"strength",strength);
     a2=std::make_unique<juce::AudioProcessorValueTreeState::SliderAttachment>(proc.state,"retune",retune);
@@ -148,7 +150,7 @@ void CoolToneAudioProcessorEditor::analyseAudio()
     sp.minNoteSec=0.045; sp.smoothRadius=2; sp.maxGapFrames=2;
     notes = cooltone::segmentNotes(frames,yp.hopSeconds,sp);
     editedMidi.clear(); editedMidi.reserve(notes.size());
-    for (const auto& n : notes) editedMidi.push_back(n.midiPitch);
+    cooltone::ScaleEngine scaleEngine;\n    scaleEngine.setKey(key.getSelectedId()-1);\n    scaleEngine.setScale(static_cast<cooltone::ScaleType>(juce::jlimit(0,13,scale.getSelectedId()-1)));\n    const double correction=static_cast<double>(strength.getValue());\n    for (const auto& n : notes) { const double snapped=scaleEngine.nearestAllowed(n.midiPitch); editedMidi.push_back(n.midiPitch+(snapped-n.midiPitch)*correction); }
     analysed = true; exportButton.setEnabled(!notes.empty()); repaint();
 }
 
@@ -278,7 +280,7 @@ void CoolToneAudioProcessorEditor::resized()
 {
     const int w=getWidth(),h=getHeight();
     preset.setBounds(420,22,170,34);key.setBounds(600,22,70,34);scale.setBounds(680,22,145,34);
-    magic.setBounds(w-300,22,145,34);bypass.setBounds(w-145,22,110,34);
+    magic.setBounds(w-420,22,130,34);vibratoButton.setBounds(w-280,22,105,34);bypass.setBounds(w-165,22,130,34);
     openButton.setBounds(24,88,120,30);analyseButton.setBounds(154,88,150,30);
     exportButton.setBounds(314,88,140,30);dragButton.setBounds(464,88,125,30);
     const int right=static_cast<int>(w*.73f),kw=(w-right-30)/2,top=180,kh=145;
