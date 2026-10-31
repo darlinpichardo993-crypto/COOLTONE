@@ -99,7 +99,7 @@ CoolToneAudioProcessorEditor::CoolToneAudioProcessorEditor(CoolToneAudioProcesso
         else if (id == 3) { set("strength",.82f); set("retune",28); set("vibAmount",.52f); }
         else if (id == 4) { set("strength",.45f); set("retune",110); set("vibAmount",.3f); }
         else if (id == 5) { set("strength",1); set("retune",5); set("vibAmount",0); }
-        else { set("strength",.85f); set("retune",35); set("vibAmount",.45f); }
+        else { set("strength",.85f); set("retune",35); set("vibAmount",.70f); }
     };
 
     auto cfg=[](juce::Slider& s)
