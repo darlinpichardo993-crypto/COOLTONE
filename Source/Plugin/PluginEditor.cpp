@@ -312,8 +312,8 @@ void CoolToneAudioProcessorEditor::drawNoteEditor(juce::Graphics& g,juce::Rectan
         const int samples=sourceAudio.getNumSamples();
         for(int x=0;x<columns;++x)
         {
-            const int a=juce::jlimit(0,samples-1,static_cast<int>((static_cast<int64>(x)*samples)/columns));
-            const int b=juce::jlimit(a+1,samples,static_cast<int>((static_cast<int64>(x+1)*samples)/columns));
+            const int a=juce::jlimit(0,samples-1,static_cast<int>((static_cast<juce::int64>(x)*samples)/columns));
+            const int b=juce::jlimit(a+1,samples,static_cast<int>((static_cast<juce::int64>(x+1)*samples)/columns));
             float lo=1.0f,hi=-1.0f;
             for(int i=a;i<b;++i)
             {
