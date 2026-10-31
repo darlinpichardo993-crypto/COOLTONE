@@ -45,6 +45,7 @@ void CoolToneAudioProcessor::processBlock(juce::AudioBuffer<float>&b,juce::MidiB
    auto read=[&](double dl){double pos=static_cast<double>(delayWrite)-dl;while(pos<0)pos+=DS;while(pos>=DS)pos-=DS;int i=static_cast<int>(pos),j=(i+1)%DS;float f=static_cast<float>(pos-std::floor(pos));return d[static_cast<size_t>(i)]+f*(d[static_cast<size_t>(j)]-d[static_cast<size_t>(i)]);};
    float out=static_cast<float>(read(da)*wa+read(db)*(1-wa));b.setSample(c,n,bypass?in:out*gain);
   }
+  delayWrite=(delayWrite+1)%DS;
  }
 }
 void CoolToneAudioProcessor::getStateInformation(juce::MemoryBlock&d){auto s=state.copyState();std::unique_ptr<juce::XmlElement>x(s.createXml());copyXmlToBinary(*x,d);}
