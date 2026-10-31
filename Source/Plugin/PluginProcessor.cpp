@@ -42,7 +42,7 @@ void CoolToneAudioProcessor::processBlock(juce::AudioBuffer<float>&b,juce::MidiB
   float wanted=std::pow(2.0f,(targetShift+static_cast<float>(vib/100))/12.0f);ratio+=static_cast<float>(smooth)*(wanted-ratio);
   phase+=(1.0-ratio)/range;while(phase<0)phase+=1;while(phase>=1)phase-=1;
   for(int c=0;c<nc;++c){float in=b.getSample(c,n);auto&d=delay[static_cast<size_t>(c)];d[static_cast<size_t>(delayWrite)]=in;
-   double p2=phase+.5;if(p2>=1)p2-=1;double da=MIN_D+phase*range,db=MIN_D+p2*range,wa=.5-.5*std::cos(2*PI*phase);
+   double p2=phase+.5;if(p2>=1)p2-=1;double da=MIN_D+phase*range,db=MIN_D+p2*range,wa=.5+.5*std::cos(2*PI*phase);
    auto read=[&](double dl){double pos=static_cast<double>(delayWrite)-dl;while(pos<0)pos+=DS;while(pos>=DS)pos-=DS;int i=static_cast<int>(pos),j=(i+1)%DS;float f=static_cast<float>(pos-std::floor(pos));return d[static_cast<size_t>(i)]+f*(d[static_cast<size_t>(j)]-d[static_cast<size_t>(i)]);};
    float out=static_cast<float>(read(da)*wa+read(db)*(1-wa));b.setSample(c,n,bypass?in:out*gain);
   }
